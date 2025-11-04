@@ -1,3 +1,4 @@
+// Полный SetupNavGraph.kt
 package nadinee.studentmaterialssearch.navigation
 
 import androidx.compose.foundation.layout.padding
@@ -8,32 +9,35 @@ import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
-
+import nadinee.studentmaterialssearch.AuthState
 import nadinee.studentmaterialssearch.screens.*
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     object Login : Screen("login", "Вход", Icons.Filled.Login)
     object Search : Screen("search", "Поиск", Icons.Filled.Search)
     object Account : Screen("account", "Профиль", Icons.Filled.AccountCircle)
-
     object Favorites : Screen("favorites", "Избранное", Icons.Filled.Star)
     object Details : Screen("details", "Детали", Icons.Filled.Search)
 }
 
 @Composable
-fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
-    var isLoggedIn by remember { mutableStateOf(false) }
+fun SetupNavGraph(
+    authState: AuthState,
+    navController: NavHostController = rememberNavController()
+) {
+    val isLoggedIn by authState.isLoggedIn  // ← Теперь работает!
 
     Scaffold(
         bottomBar = { BottomNavBar(navController, isLoggedIn) }
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Search.route,
-            modifier = androidx.compose.ui.Modifier.padding(paddingValues)
+            startDestination = if (isLoggedIn) Screen.Search.route else Screen.Login.route,
+            modifier = Modifier.padding(paddingValues)
         ) {
             composable(Screen.Search.route) {
                 SearchScreen(onItemClick = { navController.navigate(Screen.Details.route) })
@@ -41,16 +45,20 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
             composable(Screen.Login.route) {
                 LoginScreen(
                     onLoginSuccess = {
-                        isLoggedIn = true
-                        navController.navigate(Screen.Search.route)
+                        authState.login()
+                        navController.navigate(Screen.Search.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
                     }
                 )
             }
             if (isLoggedIn) {
                 composable(Screen.Favorites.route) { FavoritesScreen() }
                 composable(Screen.Account.route) { AccountScreen(onLogout = {
-                    isLoggedIn = false
-                    navController.navigate(Screen.Search.route)
+                    authState.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Search.route) { inclusive = true }
+                    }
                 }) }
             }
             composable(Screen.Details.route) {
@@ -68,23 +76,23 @@ fun BottomNavBar(navController: NavHostController, isLoggedIn: Boolean) {
         listOf(Screen.Search, Screen.Login)
 
     NavigationBar {
-        val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentDestination = navBackStackEntry?.destination
+        val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
         items.forEach { screen ->
             NavigationBarItem(
                 icon = { Icon(screen.icon, contentDescription = screen.title) },
                 label = { Text(screen.title) },
-                selected = currentDestination?.route == screen.route,
+                selected = currentRoute == screen.route,
                 onClick = {
-                    navController.navigate(screen.route) {
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
+                    if (currentRoute != screen.route) {
+                        navController.navigate(screen.route) {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 }
             )
         }
     }
 }
-

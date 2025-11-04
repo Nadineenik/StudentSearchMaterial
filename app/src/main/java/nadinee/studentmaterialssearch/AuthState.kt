@@ -1,26 +1,25 @@
+// AuthState.kt
 package nadinee.studentmaterialssearch
 
-// AuthState.kt
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 
 class AuthState : ViewModel() {
-    var isLoggedIn by mutableStateOf(false)
-        private set
+    private val _isLoggedIn = mutableStateOf(false)
+    val isLoggedIn: State<Boolean> = _isLoggedIn  // ← Теперь State!
 
     fun login() {
         viewModelScope.launch {
-            isLoggedIn = true
+            _isLoggedIn.value = true
         }
     }
 
     fun logout() {
         viewModelScope.launch {
-            isLoggedIn = false
+            _isLoggedIn.value = false
         }
     }
 }
