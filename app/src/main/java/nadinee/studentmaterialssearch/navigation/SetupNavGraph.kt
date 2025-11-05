@@ -1,4 +1,4 @@
-// Полный SetupNavGraph.kt
+// SetupNavGraph.kt
 package nadinee.studentmaterialssearch.navigation
 
 import androidx.compose.foundation.layout.padding
@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import nadinee.studentmaterialssearch.AuthState
+import nadinee.studentmaterialssearch.data.SearchResult
 import nadinee.studentmaterialssearch.screens.*
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
@@ -29,7 +30,7 @@ fun SetupNavGraph(
     authState: AuthState,
     navController: NavHostController = rememberNavController()
 ) {
-    val isLoggedIn by authState.isLoggedIn  // ← Теперь работает!
+    val isLoggedIn by authState.isLoggedIn
 
     Scaffold(
         bottomBar = { BottomNavBar(navController, isLoggedIn) }
@@ -40,8 +41,13 @@ fun SetupNavGraph(
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(Screen.Search.route) {
-                SearchScreen(onItemClick = { navController.navigate(Screen.Details.route) })
+                SearchScreen { result ->
+                    // Передаём объект через savedStateHandle
+                    navController.currentBackStackEntry?.savedStateHandle?.set("result", result)
+                    navController.navigate(Screen.Details.route)
+                }
             }
+
             composable(Screen.Login.route) {
                 LoginScreen(
                     onLoginSuccess = {
@@ -52,17 +58,29 @@ fun SetupNavGraph(
                     }
                 )
             }
+
             if (isLoggedIn) {
                 composable(Screen.Favorites.route) { FavoritesScreen() }
-                composable(Screen.Account.route) { AccountScreen(onLogout = {
-                    authState.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Search.route) { inclusive = true }
-                    }
-                }) }
+                composable(Screen.Account.route) {
+                    AccountScreen(onLogout = {
+                        authState.logout()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.Search.route) { inclusive = true }
+                        }
+                    })
+                }
             }
+
+            // Детали — получаем объект из savedStateHandle
             composable(Screen.Details.route) {
-                DetailsScreen(onBack = { navController.popBackStack() })
+                val result = navController
+                    .previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.get<SearchResult>("result")
+
+                DetailsScreen(result = result, onBack = {
+                    navController.popBackStack()
+                })
             }
         }
     }
