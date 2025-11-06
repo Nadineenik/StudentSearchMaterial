@@ -66,8 +66,9 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                         try {
                             val result = withContext(Dispatchers.IO) {
                                 val user = userDao.getUser(email, password)
-                                if (user != null) "Успешный вход!" else {
-                                    userDao.insert(User(email, password))
+                                if (user != null) "Успешный вход!"
+                                else {
+                                    userDao.insert(User(email, password, name = email.split("@").first())) // ← Имя по умолчанию
                                     "Новый пользователь зарегистрирован!"
                                 }
                             }
