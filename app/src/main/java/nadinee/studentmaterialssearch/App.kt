@@ -10,7 +10,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import nadinee.studentmaterialssearch.data.AppDatabase
 
-// App.kt
 class App : Application() {
     companion object {
         val database: AppDatabase by lazy {
@@ -19,8 +18,7 @@ class App : Application() {
                 AppDatabase::class.java,
                 "student_app.db"
             )
-                .addMigrations(MIGRATION_1_2 as Migration)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)  // ← Только один вызов
                 .build()
         }
 
@@ -34,22 +32,23 @@ class App : Application() {
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("""
-            CREATE TABLE favorites (
-                url TEXT PRIMARY KEY NOT NULL,
-                title TEXT NOT NULL,
-                content TEXT NOT NULL,
-                addedAt INTEGER NOT NULL
-            )
-        """.trimIndent())
+                    CREATE TABLE favorites (
+                        url TEXT PRIMARY KEY NOT NULL,
+                        title TEXT NOT NULL,
+                        content TEXT NOT NULL,
+                        addedAt INTEGER NOT NULL
+                    )
+                """.trimIndent())
             }
         }
 
         lateinit var instance: App
+            private set
     }
 
     override fun onCreate() {
         super.onCreate()
         instance = this
-        GlobalScope.launch(Dispatchers.IO) { database }
+        GlobalScope.launch(Dispatchers.IO) { database }  // Предзагрузка
     }
 }
