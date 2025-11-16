@@ -10,7 +10,7 @@ import nadinee.studentmaterialssearch.data.SearchResult
 // network/SerpStackClient.kt
 object SerpStackClient {
     private const val API_KEY = "8f01dfa59291f7df5626368121a0f8c3"
-    private const val BASE_URL = "http://api.serpstack.com/"
+    private const val BASE_URL = "https://api.serpstack.com/"
 
     private val retrofit = Retrofit.Builder()
         .baseUrl(BASE_URL)
