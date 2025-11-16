@@ -1,4 +1,3 @@
-// SearchScreen.kt
 package nadinee.studentmaterialssearch.screens
 
 import androidx.compose.foundation.layout.*
@@ -11,9 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import nadinee.studentmaterialssearch.data.SearchResult
-import nadinee.studentmaterialssearch.network.RetrofitClient
-import retrofit2.HttpException
-import java.io.IOException
+import nadinee.studentmaterialssearch.network.SerpStackClient
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,14 +48,11 @@ fun SearchScreen(
                             isLoading = true
                             error = null
                             try {
-                                val response = RetrofitClient.api.search(query)
-                                results = response.results
-                            } catch (e: HttpException) {
-                                error = "Ошибка сервера: ${e.message}"
-                            } catch (e: IOException) {
-                                error = "Нет интернета"
+                                val serpResults = SerpStackClient.search(query)
+                                results = serpResults
                             } catch (e: Exception) {
-                                error = "Ошибка: ${e.message}"
+                                error = "Ошибка Serpstack: ${e.message}"
+                                e.printStackTrace()
                             } finally {
                                 isLoading = false
                             }
@@ -85,7 +79,7 @@ fun SearchScreen(
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(results) { item ->
                     Card(
-                        onClick = { onItemClick(item) },  // ← Передаём объект
+                        onClick = { onItemClick(item) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {

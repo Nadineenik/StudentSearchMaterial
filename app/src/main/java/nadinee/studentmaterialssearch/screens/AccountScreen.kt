@@ -1,6 +1,7 @@
 // AccountScreen.kt
 package nadinee.studentmaterialssearch.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -19,6 +20,7 @@ import nadinee.studentmaterialssearch.data.User
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.ui.semantics.Role.Companion.Image
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,11 +75,17 @@ fun AccountScreen(onLogout: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Аватар
-            Icon(
+//            Icon(
+//                painter = painterResource(R.drawable.avatar),
+//                contentDescription = "Аватар",
+//                modifier = Modifier.size(120.dp),
+//                tint = MaterialTheme.colorScheme.primary
+//            )
+
+            Image(
                 painter = painterResource(R.drawable.avatar),
                 contentDescription = "Аватар",
-                modifier = Modifier.size(120.dp),
-                tint = MaterialTheme.colorScheme.primary
+                modifier = Modifier.size(120.dp)
             )
 
             Spacer(Modifier.height(24.dp))
