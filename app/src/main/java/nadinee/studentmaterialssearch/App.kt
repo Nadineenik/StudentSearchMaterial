@@ -19,6 +19,7 @@ class App : Application() {
                 "student_app.db"
             )
                 .addMigrations(MIGRATION_1_2, MIGRATION_2_3)  // ← Только один вызов
+                .fallbackToDestructiveMigration()
                 .build()
         }
 

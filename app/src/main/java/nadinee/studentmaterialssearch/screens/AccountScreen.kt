@@ -144,8 +144,8 @@ fun AccountScreen(onLogout: () -> Unit) {
                         modifier = Modifier.align(Alignment.End)
                     ) { Text("Добавить") }
 
-                    Spacer(Modifier.height(12.dp))
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Spacer(Modifier.height(8.dp))
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                         items(selectedInterests.toList()) { interest ->
                             InputChip(
                                 selected = true,

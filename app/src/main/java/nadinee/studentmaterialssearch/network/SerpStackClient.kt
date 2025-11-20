@@ -6,8 +6,6 @@ import nadinee.studentmaterialssearch.data.OrganicResult
 import nadinee.studentmaterialssearch.data.SerpStackResponse
 import nadinee.studentmaterialssearch.data.SearchResult
 
-// network/SerpStackClient.kt
-// network/SerpStackClient.kt
 object SerpStackClient {
     private const val API_KEY = "8f01dfa59291f7df5626368121a0f8c3"
     private const val BASE_URL = "https://api.serpstack.com/"
