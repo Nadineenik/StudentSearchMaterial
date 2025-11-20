@@ -31,6 +31,9 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     object Details : Screen("details/{url}", "Результат") {
         fun createRoute(url: String) = "details/${URLEncoder.encode(url, "UTF-8")}"
     }
+    object WebView : Screen("webview/{url}", "Браузер") {
+        fun createRoute(url: String) = "webview/${URLEncoder.encode(url, "UTF-8")}"
+    }
 }
 
 @Composable
@@ -121,7 +124,21 @@ fun SetupNavGraph(
 
                 DetailsScreen(
                     result = searchResult,
-                    onBack = { navController.popBackStack() }
+                    url = url,                    // ← ДОБАВЛЯЕМ URL!
+                    onBack = { navController.popBackStack() },
+                    navController = navController  // ← И navController!
+                )
+            }
+            composable(
+                route = Screen.WebView.route,
+                arguments = listOf(navArgument("url") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val encodedUrl = backStackEntry.arguments?.getString("url") ?: ""
+                val url = URLDecoder.decode(encodedUrl, "UTF-8")
+                WebViewScreen(
+                    url = url,
+                    navController = navController,
+                    title = "Загрузка..."
                 )
             }
         }

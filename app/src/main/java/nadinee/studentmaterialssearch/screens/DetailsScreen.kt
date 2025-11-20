@@ -1,8 +1,6 @@
-// DetailsScreen.kt
+// DetailsScreen.kt — ФИНАЛЬНАЯ, ИДЕАЛЬНАЯ ВЕРСИЯ
 package nadinee.studentmaterialssearch.screens
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
@@ -10,29 +8,26 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import nadinee.studentmaterialssearch.App
 import nadinee.studentmaterialssearch.data.Favorite
 import nadinee.studentmaterialssearch.data.SearchResult
+import nadinee.studentmaterialssearch.navigation.Screen  // ← Только этот импорт!
 
-
-// DetailsScreen.kt — ИСПРАВЛЕННАЯ ВЕРСИЯ
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailsScreen(
     result: SearchResult? = null,
-    url: String = "",           // ← ДОБАВИЛ
-    onBack: () -> Unit = {}     // ← ДОБАВИЛ
+    url: String = "",
+    onBack: () -> Unit = {},
+    navController: NavController
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var isFavorite by remember { mutableStateOf(false) }
 
-    // Определяем, какой результат показывать
     val displayResult = result ?: SearchResult(
         title = "Внешняя ссылка",
         content = "Ссылка была открыта напрямую",
@@ -64,6 +59,7 @@ fun DetailsScreen(
             Text(displayResult.content, style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(16.dp))
 
+            // Кнопка избранного
             Button(
                 onClick = {
                     scope.launch {
@@ -74,7 +70,7 @@ fun DetailsScreen(
                                 Favorite(
                                     url = url,
                                     title = displayResult.title,
-                                    content = displayResult.content.take(500) // ограничиваем длину
+                                    content = displayResult.content.take(500)
                                 )
                             )
                         }
@@ -96,14 +92,15 @@ fun DetailsScreen(
             }
 
             Spacer(Modifier.height(16.dp))
+
+            // КНОПКА — ОТКРЫТЬ В ПРИЛОЖЕНИИ (WebView)
             Button(
                 onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                    context.startActivity(intent)
+                    navController.navigate(Screen.WebView.createRoute(url))
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Открыть в браузере")
+                Text("Открыть в приложении")
             }
         }
     }
