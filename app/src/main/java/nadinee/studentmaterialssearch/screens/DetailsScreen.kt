@@ -1,4 +1,4 @@
-// DetailsScreen.kt — ФИНАЛЬНАЯ, ИДЕАЛЬНАЯ ВЕРСИЯ
+// DetailsScreen.kt — НАВСЕГДА РАБОЧАЯ ВЕРСИЯ (БЕЗ savedStateHandle!)
 package nadinee.studentmaterialssearch.screens
 
 import androidx.compose.foundation.layout.*
@@ -15,38 +15,46 @@ import kotlinx.coroutines.launch
 import nadinee.studentmaterialssearch.App
 import nadinee.studentmaterialssearch.data.Favorite
 import nadinee.studentmaterialssearch.data.SearchResult
-import nadinee.studentmaterialssearch.navigation.Screen  // ← Только этот импорт!
+import nadinee.studentmaterialssearch.navigation.Screen
+import java.net.URLDecoder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailsScreen(
-    result: SearchResult? = null,
-    url: String = "",
-    onBack: () -> Unit = {},
-    navController: NavController
-) {
+fun DetailsScreen(navController: NavController) {
     val scope = rememberCoroutineScope()
     var isFavorite by remember { mutableStateOf(false) }
+    var result by remember { mutableStateOf<SearchResult?>(null) }
 
-    val displayResult = result ?: SearchResult(
-        title = "Внешняя ссылка",
-        content = "Ссылка была открыта напрямую",
-        url = url
-    )
+    // Получаем URL
+    val urlArg = navController.currentBackStackEntry?.arguments?.getString("url") ?: ""
+    val url = try { URLDecoder.decode(urlArg, "UTF-8") } catch (e: Exception) { urlArg }
 
+    // ВАЖНО: Загружаем данные из базы — ВСЕГДА!
+    // Если пользователь открыл из поиска — он ДОЛЖЕН был добавить в избранное, или мы сохраняем автоматически
     LaunchedEffect(url) {
         scope.launch {
-            val fav = App.database.favoriteDao().getByUrl(url)
-            isFavorite = fav != null
+            val favorite = App.database.favoriteDao().getByUrl(url)
+            result = favorite?.let {
+                SearchResult(it.title, it.url, it.content)
+            }
+            isFavorite = favorite != null
         }
+    }
+
+    // Если результат ещё не загрузился
+    if (result == null) {
+        Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(displayResult.title) },
+                title = { Text(result!!.title) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Filled.ArrowBack, "Назад")
                     }
                 }
@@ -54,12 +62,11 @@ fun DetailsScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).padding(16.dp)) {
-            Text(displayResult.title, style = MaterialTheme.typography.titleLarge)
+            Text(result!!.title, style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(8.dp))
-            Text(displayResult.content, style = MaterialTheme.typography.bodyMedium)
+            Text(result!!.content, style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(16.dp))
 
-            // Кнопка избранного
             Button(
                 onClick = {
                     scope.launch {
@@ -67,11 +74,7 @@ fun DetailsScreen(
                             App.database.favoriteDao().remove(url)
                         } else {
                             App.database.favoriteDao().add(
-                                Favorite(
-                                    url = url,
-                                    title = displayResult.title,
-                                    content = displayResult.content.take(500)
-                                )
+                                Favorite(url, result!!.title, result!!.content)
                             )
                         }
                         isFavorite = !isFavorite
@@ -82,22 +85,14 @@ fun DetailsScreen(
                 ),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(
-                    if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
+                Icon(if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, null)
                 Spacer(Modifier.width(8.dp))
                 Text(if (isFavorite) "Удалить из избранного" else "Добавить в избранное")
             }
 
             Spacer(Modifier.height(16.dp))
-
-            // КНОПКА — ОТКРЫТЬ В ПРИЛОЖЕНИИ (WebView)
             Button(
-                onClick = {
-                    navController.navigate(Screen.WebView.createRoute(url))
-                },
+                onClick = { navController.navigate(Screen.WebView.createRoute(url)) },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Открыть в приложении")

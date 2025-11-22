@@ -1,3 +1,4 @@
+// SearchScreen.kt — ФИНАЛЬНАЯ ВЕРСИЯ (автоматически сохраняет в избранное)
 package nadinee.studentmaterialssearch.screens
 
 import androidx.compose.foundation.layout.*
@@ -13,17 +14,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import kotlinx.coroutines.launch
+import nadinee.studentmaterialssearch.App
+import nadinee.studentmaterialssearch.data.Favorite
 import nadinee.studentmaterialssearch.data.SearchResult
+import nadinee.studentmaterialssearch.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
-    onItemClick: (SearchResult) -> Unit
+    navController: NavController
 ) {
-    // ← Исправлено: правильный импорт viewModel()
     val viewModel: SearchViewModel = viewModel()
-
     var query by rememberSaveable { mutableStateOf("") }
+    val scope = rememberCoroutineScope()  // ← Добавили scope
 
     Scaffold(
         topBar = { CenterAlignedTopAppBar(title = { Text("Поиск") }) }
@@ -40,83 +45,67 @@ fun SearchScreen(
                 label = { Text("Запрос") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(
-                    onSearch = {
-                        if (query.isNotBlank()) {
-                            viewModel.search(query)
-                        }
-                    }
-                ),
-                singleLine = true  // ← Хорошая практика
+                keyboardActions = KeyboardActions(onSearch = {
+                    if (query.isNotBlank()) viewModel.search(query)
+                }),
+                singleLine = true
             )
 
             Spacer(Modifier.height(12.dp))
-
             Button(
-                onClick = {
-                    if (query.isNotBlank()) {
-                        viewModel.search(query)
-                    }
-                },
+                onClick = { if (query.isNotBlank()) viewModel.search(query) },
                 enabled = !viewModel.isLoading,
                 modifier = Modifier.align(Alignment.End)
             ) {
                 if (viewModel.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text("Искать")
-                }
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                } else Text("Искать")
             }
 
-            // Ошибка
-            viewModel.error?.let { errorMsg ->
+            viewModel.error?.let {
                 Spacer(Modifier.height(16.dp))
-                Text(errorMsg, color = MaterialTheme.colorScheme.error)
+                Text(it, color = MaterialTheme.colorScheme.error)
             }
 
             Spacer(Modifier.height(16.dp))
 
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(
-                    items = viewModel.results,
-                    key = { it.url }  // ← Уникальный ключ для стабильности
-                ) { item ->
+                items(viewModel.results, key = { it.url }) { item ->
                     Card(
-                        onClick = { onItemClick(item) },
+                        onClick = {
+                            // ← ВОТ ЭТО САМОЕ ВАЖНОЕ!
+                            scope.launch {
+                                // Автоматически сохраняем в избранное при открытии
+                                App.database.favoriteDao().add(
+                                    Favorite(
+                                        url = item.url,
+                                        title = item.title,
+                                        content = item.content
+                                    )
+                                )
+                            }
+                            // Переходим в детали
+                            navController.navigate(Screen.Details.createRoute(item.url))
+                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = item.title,
-                                style = MaterialTheme.typography.titleMedium
-                            )
+                        Column(Modifier.padding(16.dp)) {
+                            Text(item.title, style = MaterialTheme.typography.titleMedium)
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                text = item.content,
-                                style = MaterialTheme.typography.bodyMedium,
+                                item.content,
                                 maxLines = 2,
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                             )
                             Spacer(Modifier.height(4.dp))
-                            Text(
-                                text = item.url,
-                                color = MaterialTheme.colorScheme.primary,
-                                style = MaterialTheme.typography.bodySmall
-                            )
+                            Text(item.url, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
             }
 
-            // Если список пустой — покажем подсказку
             if (viewModel.results.isEmpty() && !viewModel.isLoading && viewModel.error == null) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("Введите запрос и нажмите «Искать»", color = MaterialTheme.colorScheme.outline)
                 }
             }

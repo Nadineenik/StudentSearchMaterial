@@ -11,16 +11,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.*
 import androidx.navigation.compose.*
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest  // ← ЭТО РАБОТАЕТ ВЕЗДЕ!
 import nadinee.studentmaterialssearch.App
 
-import nadinee.studentmaterialssearch.data.Favorite
 import nadinee.studentmaterialssearch.data.SearchResult
 import nadinee.studentmaterialssearch.screens.*
 import java.net.URLDecoder
 import java.net.URLEncoder
-import kotlinx.coroutines.flow.collectLatest
 
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector? = null) {
@@ -72,11 +69,7 @@ fun SetupNavGraph(
                 )
             }
 
-            composable(Screen.Search.route) {
-                SearchScreen { result ->
-                    navController.navigate(Screen.Details.createRoute(result.url))
-                }
-            }
+
 
             composable(Screen.Account.route) {
                 AccountScreen(
@@ -89,57 +82,29 @@ fun SetupNavGraph(
                 )
             }
 
+
+            composable(Screen.Search.route) {
+                SearchScreen(navController = navController)
+            }
+
             composable(Screen.Favorites.route) {
-                FavoritesScreen { favorite ->
-                    navController.navigate(Screen.Details.createRoute(favorite.url))
-                }
+                FavoritesScreen(navController = navController)
             }
 
             composable(
                 route = Screen.Details.route,
                 arguments = listOf(navArgument("url") { type = NavType.StringType })
-            ) { backStackEntry ->
-                val encodedUrl = backStackEntry.arguments?.getString("url") ?: ""
-                val url = try {
-                    URLDecoder.decode(encodedUrl, "UTF-8")
-                } catch (e: Exception) {
-                    encodedUrl
-                }
-
-                var searchResult by remember { mutableStateOf<SearchResult?>(null) }
-                val scope = rememberCoroutineScope()
-
-                LaunchedEffect(url) {
-                    scope.launch {
-                        val favorite = App.database.favoriteDao().getByUrl(url)
-                        searchResult = favorite?.let {
-                            SearchResult(it.title, it.url, it.content)
-                        } ?: SearchResult(
-                            title = "Ссылка",
-                            url = url,
-                            content = "Открыто напрямую"
-                        )
-                    }
-                }
-
-                DetailsScreen(
-                    result = searchResult,
-                    url = url,                    // ← ДОБАВЛЯЕМ URL!
-                    onBack = { navController.popBackStack() },
-                    navController = navController  // ← И navController!
-                )
+            ) {
+                DetailsScreen(navController = navController)
             }
+
             composable(
                 route = Screen.WebView.route,
                 arguments = listOf(navArgument("url") { type = NavType.StringType })
             ) { backStackEntry ->
                 val encodedUrl = backStackEntry.arguments?.getString("url") ?: ""
-                val url = URLDecoder.decode(encodedUrl, "UTF-8")
-                WebViewScreen(
-                    url = url,
-                    navController = navController,
-                    title = "Загрузка..."
-                )
+                val url = try { URLDecoder.decode(encodedUrl, "UTF-8") } catch (e: Exception) { encodedUrl }
+                WebViewScreen(url = url, navController = navController)
             }
         }
     }

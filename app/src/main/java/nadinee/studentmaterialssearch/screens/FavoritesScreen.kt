@@ -1,4 +1,4 @@
-// FavoritesScreen.kt
+// FavoritesScreen.kt — ФИНАЛЬНАЯ ВЕРСИЯ (без savedStateHandle!)
 package nadinee.studentmaterialssearch.screens
 
 import androidx.compose.foundation.layout.*
@@ -10,31 +10,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import nadinee.studentmaterialssearch.App
 import nadinee.studentmaterialssearch.data.Favorite
-import nadinee.studentmaterialssearch.data.SearchResult
+import nadinee.studentmaterialssearch.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
-// FavoritesScreen.kt — ИСПРАВЛЕННАЯ ВЕРСИЯ
 @Composable
 fun FavoritesScreen(
-    onItemClick: (Favorite) -> Unit = {}  // ← ДОБАВИЛ ПАРАМЕТР
+    navController: NavController
 ) {
     var favorites by remember { mutableStateOf<List<Favorite>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         scope.launch {
-            try {
-                favorites = App.database.favoriteDao().getAll()
-            } catch (e: Exception) {
-                error = "Ошибка загрузки: ${e.message}"
-            } finally {
-                isLoading = false
-            }
+            favorites = App.database.favoriteDao().getAll()
+            isLoading = false
         }
     }
 
@@ -43,22 +37,40 @@ fun FavoritesScreen(
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             when {
-                isLoading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                error != null -> Text(error!!, color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.Center))
-                favorites.isEmpty() -> Text("Пока ничего не добавлено", modifier = Modifier.align(Alignment.Center))
+                isLoading -> {
+                    CircularProgressIndicator(Modifier.align(Alignment.Center))
+                }
+                favorites.isEmpty() -> {
+                    Text("Пока ничего не добавлено", Modifier.align(Alignment.Center))
+                }
                 else -> {
-                    LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(favorites) { favorite ->
+                    LazyColumn(
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(favorites, key = { it.url }) { fav ->
                             Card(
-                                onClick = { onItemClick(favorite) },  // ← ВЫЗЫВАЕМ КЛИК!
+                                onClick = {
+                                    // ← ПРОСТО ПЕРЕХОДИМ — БЕЗ savedStateHandle!
+                                    navController.navigate(Screen.Details.createRoute(fav.url))
+                                },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(favorite.title, style = MaterialTheme.typography.titleMedium)
+                                    Text(fav.title, style = MaterialTheme.typography.titleMedium)
                                     Spacer(Modifier.height(4.dp))
-                                    Text(favorite.content, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                    Text(
+                                        text = fav.content,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
                                     Spacer(Modifier.height(4.dp))
-                                    Text(favorite.url, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+                                    Text(
+                                        text = fav.url,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
                                 }
                             }
                         }
