@@ -1,6 +1,7 @@
-// AccountScreen.kt — обновлённая версия с защитой от сжатия чипов
+// AccountScreen.kt — ФИНАЛЬНАЯ, РАБОЧАЯ, НЕ ЛОМАЕТ ИНТЕРЕСЫ
 package nadinee.studentmaterialssearch.screens
 
+import AuthState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,51 +23,49 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import nadinee.studentmaterialssearch.App
 import nadinee.studentmaterialssearch.R
-import nadinee.studentmaterialssearch.data.User
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AccountScreen(onLogout: () -> Unit) {
+fun AccountScreen(
+    authState: AuthState,
+    onLogout: () -> Unit
+) {
     val scope = rememberCoroutineScope()
+    val currentUser by authState.currentUser.collectAsState()
 
-    var user by remember { mutableStateOf<User?>(null) }
     var isEditing by remember { mutableStateOf(false) }
-
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-
     var interestsInput by remember { mutableStateOf("") }
-    var selectedInterests by remember { mutableStateOf(setOf<String>()) }
 
-    // Загрузка данных
-    LaunchedEffect(Unit) {
-        scope.launch {
-            val loadedUser = App.database.userDao().getAllUsers().firstOrNull()
-            user = loadedUser
-            loadedUser?.let {
-                name = it.name
-                email = it.email
-                password = it.password
-                selectedInterests = it.interests
-                    .split(",")
-                    .map { s -> s.trim() }
-                    .filter { it.isNotBlank() }
-                    .toSet()
-            }
+    // ← КЛЮЧЕВОЙ МОМЕНТ: состояние интересов НЕ привязано к currentUser!
+    var selectedInterests by remember { mutableStateOf<Set<String>>(emptySet()) }
+
+    // Загружаем данные при появлении пользователя
+    LaunchedEffect(currentUser) {
+        currentUser?.let { user ->
+            name = user.name
+            email = user.email
+            selectedInterests = user.interests
+                .split(",")
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+                .toSet()
         }
     }
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Мой профиль") },
+                title = { Text(",my профиль") },
                 actions = {
                     IconButton(onClick = {
                         if (isEditing) {
                             scope.launch {
-                                val finalPassword =
-                                    if (password.isBlank()) user?.password ?: "" else password
+                                val finalPassword = if (password.isBlank()) {
+                                    currentUser?.password ?: return@launch
+                                } else password
 
                                 App.database.userDao().updateProfile(
                                     email = email,
@@ -75,16 +74,12 @@ fun AccountScreen(onLogout: () -> Unit) {
                                     interests = selectedInterests.joinToString(",")
                                 )
 
-                                val updated = App.database.userDao().getAllUsers().firstOrNull()
-                                user = updated
-                                updated?.let {
-                                    name = it.name
-                                    password = it.password
-                                    selectedInterests = it.interests
-                                        .split(",")
-                                        .map { s -> s.trim() }
-                                        .filter { it.isNotBlank() }
-                                        .toSet()
+                                // Обновляем AuthState
+                                currentUser?.let {
+                                    authState.login(it.copy(
+                                        name = name,
+                                        interests = selectedInterests.joinToString(",")
+                                    ))
                                 }
                             }
                         }
@@ -92,13 +87,20 @@ fun AccountScreen(onLogout: () -> Unit) {
                     }) {
                         Icon(
                             imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
-                            contentDescription = null
+                            contentDescription = if (isEditing) "Сохранить" else "Редактировать"
                         )
                     }
                 }
             )
         }
     ) { padding ->
+        if (currentUser == null) {
+            Box(Modifier.fillMaxSize(), Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            return@Scaffold
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -111,138 +113,93 @@ fun AccountScreen(onLogout: () -> Unit) {
                 contentDescription = "Аватар",
                 modifier = Modifier.size(120.dp)
             )
-
             Spacer(Modifier.height(32.dp))
 
-            if (user != null) {
-                if (isEditing) {
-                    // === РЕДАКТИРОВАНИЕ ===
-                    OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        label = { Text("Имя") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(10.dp))
+            if (isEditing) {
+                // === РЕДАКТИРОВАНИЕ ===
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Имя") }, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(10.dp))
+                OutlinedTextField(value = email, onValueChange = {}, label = { Text("Email") }, enabled = false, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Новый пароль (оставьте пустым — не менять)") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(14.dp))
 
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = {},
-                        label = { Text("Email") },
-                        enabled = false,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = interestsInput,
+                    onValueChange = { interestsInput = it },
+                    label = { Text("Интересы (через запятую)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(12.dp))
 
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text("Новый пароль (оставьте пустым — не менять)") },
-                        visualTransformation = PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(14.dp))
-
-                    OutlinedTextField(
-                        value = interestsInput,
-                        onValueChange = { interestsInput = it },
-                        label = { Text("Интересы (через запятую)") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(Modifier.height(10.dp))
-
-                    // === ЧИПЫ (жёсткая ширина + читаемость) ===
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                    ) {
-                        items(selectedInterests.toList()) { interest ->
-                            // Surface с минимальной шириной и высотой — не даст чипам сжиматься
-                            Surface(
-                                shape = MaterialTheme.shapes.medium,
-                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                tonalElevation = 2.dp,
-                                modifier = Modifier
-                                    .widthIn(min = 100.dp)   // ← Жёсткая минимальная ширина
-                                    .height(20.dp)
+                // Чипы — красиво и не сжимаются
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(selectedInterests.toList()) { interest ->
+                        Surface(
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier.height(36.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
+                                Text(
+                                    text = interest,
+                                    fontSize = 14.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false)
+                                )
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Удалить",
                                     modifier = Modifier
-                                        .padding(horizontal = 10.dp)
-                                        .fillMaxHeight()
-                                ) {
-                                    // Текст не будет переноситься и покажет троеточие, если не влезает
-                                    Text(
-                                        text = interest,
-                                        fontSize = 10.sp,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier
-                                            .weight(1f)
-                                    )
-
-                                    Icon(
-                                        Icons.Default.Close,
-                                        contentDescription = "Удалить",
-                                        modifier = Modifier
-                                            .size(10.dp)
-                                            .clickable { selectedInterests = selectedInterests - interest }
-                                    )
-                                }
+                                        .size(18.dp)
+                                        .clickable { selectedInterests = selectedInterests - interest }
+                                )
                             }
                         }
-                    }
-
-                    Spacer(Modifier.height(8.dp))
-
-                    Button(
-                        onClick = {
-                            val newOnes = interestsInput.split(",")
-                                .map { it.trim() }
-                                .filter { it.isNotBlank() }
-                            selectedInterests = selectedInterests + newOnes
-                            interestsInput = ""
-                        },
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
-                        Text("Добавить")
-                    }
-
-
-                } else {
-                    // === ПРОСМОТР ===
-                    Text("Привет, $name!", style = MaterialTheme.typography.titleLarge, fontSize = 22.sp)
-                    Spacer(Modifier.height(8.dp))
-                    Text(email, style = MaterialTheme.typography.bodyMedium)
-                    Spacer(Modifier.height(24.dp))
-
-                    if (selectedInterests.isNotEmpty()) {
-                        Text("Интересы:", style = MaterialTheme.typography.labelLarge)
-                        Spacer(Modifier.height(8.dp))
-
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(selectedInterests.toList()) { interest ->
-                                FilledTonalButton(onClick = { }) {
-                                    Text(interest)
-                                }
-                            }
-                        }
-
-                        Spacer(Modifier.height(16.dp))
-                    }
-
-                    Button(
-                        onClick = onLogout,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Выйти из аккаунта")
                     }
                 }
+
+                Spacer(Modifier.height(12.dp))
+                Button(
+                    onClick = {
+                        val newOnes = interestsInput.split(",").map { it.trim() }.filter { it.isNotBlank() }
+                        selectedInterests = selectedInterests + newOnes
+                        interestsInput = ""
+                    },
+                    modifier = Modifier.align(Alignment.End)
+                ) { Text("Добавить") }
+
             } else {
-                CircularProgressIndicator()
+                // === ПРОСМОТР ===
+                Text("Привет, $name!", style = MaterialTheme.typography.titleLarge, fontSize = 24.sp)
+                Spacer(Modifier.height(8.dp))
+                Text(email, style = MaterialTheme.typography.bodyLarge)
+                Spacer(Modifier.height(24.dp))
+
+                if (selectedInterests.isNotEmpty()) {
+                    Text("Интересы:", style = MaterialTheme.typography.labelLarge)
+                    Spacer(Modifier.height(8.dp))
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(selectedInterests.toList()) { interest ->
+                            FilledTonalButton(onClick = {}) { Text(interest) }
+                        }
+                    }
+                    Spacer(Modifier.height(24.dp))
+                }
+
+                Button(onClick = onLogout, modifier = Modifier.fillMaxWidth()) {
+                    Text("Выйти из аккаунта")
+                }
             }
         }
     }

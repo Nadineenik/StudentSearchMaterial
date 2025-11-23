@@ -1,4 +1,4 @@
-package nadinee.studentmaterialssearch
+/*package nadinee.studentmaterialssearch
 
 import android.content.Intent
 import android.os.Bundle
@@ -39,3 +39,6 @@ class SearchActivity : AppCompatActivity() {
         }
     }
 }
+
+
+ */

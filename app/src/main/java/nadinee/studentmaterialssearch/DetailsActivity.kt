@@ -1,4 +1,4 @@
-package nadinee.studentmaterialssearch
+/*package nadinee.studentmaterialssearch
 
 import android.os.Bundle
 import android.widget.Button
@@ -27,3 +27,6 @@ class DetailsActivity : AppCompatActivity() {
         }
     }
 }
+
+
+ */

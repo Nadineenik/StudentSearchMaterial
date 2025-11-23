@@ -1,4 +1,4 @@
-package nadinee.studentmaterialssearch
+/*package nadinee.studentmaterialssearch
 
 
 import android.view.LayoutInflater
@@ -35,3 +35,6 @@ class SimpleAdapter(
         notifyDataSetChanged()
     }
 }
+
+
+ */

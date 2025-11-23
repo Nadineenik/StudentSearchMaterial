@@ -59,43 +59,32 @@ fun SetupNavGraph(
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(Screen.Login.route) {
-                LoginScreen(
-                    onLoginSuccess = {
-                        authState.login()
-                        navController.navigate(Screen.Search.route) {
-                            popUpTo(Screen.Login.route) { inclusive = true }
-                        }
+                LoginScreen(authState = authState, onLoginSuccess = {
+                    navController.navigate(Screen.Search.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
                     }
-                )
+                })
             }
-
-
 
             composable(Screen.Account.route) {
-                AccountScreen(
-                    onLogout = {
-                        authState.logout()
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(0) { inclusive = true }
-                        }
+                AccountScreen(authState = authState, onLogout = {
+                    authState.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
                     }
-                )
+                })
             }
 
-
             composable(Screen.Search.route) {
-                SearchScreen(navController = navController)
+                SearchScreen(navController = navController, authState = authState)
             }
 
             composable(Screen.Favorites.route) {
-                FavoritesScreen(navController = navController)
+                FavoritesScreen(navController = navController, authState = authState)
             }
 
-            composable(
-                route = Screen.Details.route,
-                arguments = listOf(navArgument("url") { type = NavType.StringType })
-            ) {
-                DetailsScreen(navController = navController)
+            composable(Screen.Details.route, arguments = listOf(navArgument("url") { type = NavType.StringType })) {
+                DetailsScreen(navController = navController, authState = authState)
             }
 
             composable(

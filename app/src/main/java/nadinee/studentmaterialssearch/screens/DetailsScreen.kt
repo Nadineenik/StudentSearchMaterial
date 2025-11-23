@@ -1,6 +1,7 @@
 // DetailsScreen.kt — НАВСЕГДА РАБОЧАЯ ВЕРСИЯ (БЕЗ savedStateHandle!)
 package nadinee.studentmaterialssearch.screens
 
+import AuthState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
@@ -8,6 +9,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -20,32 +22,25 @@ import java.net.URLDecoder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailsScreen(navController: NavController) {
+fun DetailsScreen(navController: NavController, authState: AuthState) {
     val scope = rememberCoroutineScope()
+    val currentEmail = authState.currentUser.collectAsState().value?.email ?: return
     var isFavorite by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<SearchResult?>(null) }
 
-    // Получаем URL
     val urlArg = navController.currentBackStackEntry?.arguments?.getString("url") ?: ""
     val url = try { URLDecoder.decode(urlArg, "UTF-8") } catch (e: Exception) { urlArg }
 
-    // ВАЖНО: Загружаем данные из базы — ВСЕГДА!
-    // Если пользователь открыл из поиска — он ДОЛЖЕН был добавить в избранное, или мы сохраняем автоматически
-    LaunchedEffect(url) {
+    LaunchedEffect(url, currentEmail) {
         scope.launch {
-            val favorite = App.database.favoriteDao().getByUrl(url)
-            result = favorite?.let {
-                SearchResult(it.title, it.url, it.content)
-            }
+            val favorite = App.database.favoriteDao().getByUrl(url, currentEmail)
+            result = favorite?.let { SearchResult(it.title, it.url, it.content) }
             isFavorite = favorite != null
         }
     }
 
-    // Если результат ещё не загрузился
     if (result == null) {
-        Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-            CircularProgressIndicator()
-        }
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         return
     }
 
@@ -53,11 +48,7 @@ fun DetailsScreen(navController: NavController) {
         topBar = {
             TopAppBar(
                 title = { Text(result!!.title) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Filled.ArrowBack, "Назад")
-                    }
-                }
+                navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Filled.ArrowBack, "Назад") } }
             )
         }
     ) { padding ->
@@ -71,18 +62,14 @@ fun DetailsScreen(navController: NavController) {
                 onClick = {
                     scope.launch {
                         if (isFavorite) {
-                            App.database.favoriteDao().remove(url)
+                            App.database.favoriteDao().remove(url, currentEmail)
                         } else {
-                            App.database.favoriteDao().add(
-                                Favorite(url, result!!.title, result!!.content)
-                            )
+                            App.database.favoriteDao().add(Favorite(url, currentEmail, result!!.title, result!!.content))
                         }
                         isFavorite = !isFavorite
                     }
                 },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = if (isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, null)
@@ -91,10 +78,7 @@ fun DetailsScreen(navController: NavController) {
             }
 
             Spacer(Modifier.height(16.dp))
-            Button(
-                onClick = { navController.navigate(Screen.WebView.createRoute(url)) },
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Button(onClick = { navController.navigate(Screen.WebView.createRoute(url)) }, modifier = Modifier.fillMaxWidth()) {
                 Text("Открыть в приложении")
             }
         }
