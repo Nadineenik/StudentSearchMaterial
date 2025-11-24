@@ -2,6 +2,7 @@
 package nadinee.studentmaterialssearch.screens
 
 import AuthState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -58,7 +59,7 @@ fun AccountScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(",my профиль") },
+                title = { Text("Мой профиль") },
                 actions = {
                     IconButton(onClick = {
                         if (isEditing) {
@@ -113,7 +114,7 @@ fun AccountScreen(
                 contentDescription = "Аватар",
                 modifier = Modifier.size(120.dp)
             )
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(20.dp))
 
             if (isEditing) {
                 // === РЕДАКТИРОВАНИЕ ===
@@ -121,14 +122,15 @@ fun AccountScreen(
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(value = email, onValueChange = {}, label = { Text("Email") }, enabled = false, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(10.dp))
+
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("Новый пароль (оставьте пустым — не менять)") },
+                    label = { Text("Новый пароль") },
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(10.dp))
 
                 OutlinedTextField(
                     value = interestsInput,
@@ -136,48 +138,62 @@ fun AccountScreen(
                     label = { Text("Интересы (через запятую)") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(5.dp))
 
-                // Чипы — красиво и не сжимаются
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     items(selectedInterests.toList()) { interest ->
-                        Surface(
-                            shape = MaterialTheme.shapes.medium,
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier.height(36.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-                            ) {
+                        AssistChip(
+                            onClick = { },
+                            label = {
                                 Text(
                                     text = interest,
-                                    fontSize = 14.sp,
+                                    fontSize = 10.sp,
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f, fill = false)
+                                    overflow = TextOverflow.Ellipsis
                                 )
+                            },
+                            trailingIcon = {
                                 Icon(
-                                    Icons.Default.Close,
+                                    imageVector = Icons.Default.Close,
                                     contentDescription = "Удалить",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier
-                                        .size(18.dp)
-                                        .clickable { selectedInterests = selectedInterests - interest }
+                                        .size(14.dp)
+                                        .clickable {
+                                            selectedInterests = selectedInterests - interest
+                                        }
                                 )
-                            }
-                        }
+                            },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                trailingIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            border = null, // ← просто null, если не поддерживается
+                            shape = MaterialTheme.shapes.small
+                        )
                     }
                 }
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(5.dp))
+
                 Button(
                     onClick = {
-                        val newOnes = interestsInput.split(",").map { it.trim() }.filter { it.isNotBlank() }
-                        selectedInterests = selectedInterests + newOnes
-                        interestsInput = ""
+                        val newOnes = interestsInput.split(",")
+                            .map { it.trim() }
+                            .filter { it.isNotBlank() }
+                        if (newOnes.isNotEmpty()) {
+                            selectedInterests = selectedInterests + newOnes
+                            interestsInput = ""
+                        }
                     },
                     modifier = Modifier.align(Alignment.End)
-                ) { Text("Добавить") }
+                ) {
+                    Text("Добавить")
+                }
 
             } else {
                 // === ПРОСМОТР ===
