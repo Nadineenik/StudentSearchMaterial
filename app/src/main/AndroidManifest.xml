@@ -14,16 +14,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.StudentMaterialsSearch"
         android:usesCleartextTraffic="true"
+        android:enableOnBackInvokedCallback="true"
         tools:ignore="ExtraText">
-        <activity
-            android:name=".ProfileActivity"
-            android:exported="false" />
-        <activity
-            android:name=".DetailsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".SearchActivity"
-            android:exported="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

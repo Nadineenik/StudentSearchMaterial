@@ -22,15 +22,6 @@ import nadinee.studentmaterialssearch.App
 import nadinee.studentmaterialssearch.data.Favorite
 import nadinee.studentmaterialssearch.navigation.Screen
 
-// SharedFlow для передачи запроса в SearchScreen
-object SearchQueryEvent {
-    private val _events = MutableSharedFlow<String>(extraBufferCapacity = 1)
-    val events = _events.asSharedFlow()
-
-    fun sendQuery(query: String) {
-        _events.tryEmit(query)
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,11 +94,11 @@ fun RecommendationsScreen(
                     items(recommendedQueries) { query ->
                         Card(
                             onClick = {
-                                // Отправляем запрос в SearchScreen
                                 SearchQueryEvent.sendQuery(query)
                                 navController.navigate(Screen.Search.route) {
-                                    popUpTo(Screen.Search.route) { inclusive = true }
+                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
                                     launchSingleTop = true
+                                    restoreState = true
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),

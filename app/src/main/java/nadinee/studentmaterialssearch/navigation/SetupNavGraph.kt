@@ -1,30 +1,30 @@
-// SetupNavGraph.kt — ГАРАНТИРОВАННО РАБОТАЕТ НА ЛЮБОЙ ВЕРСИИ!
+// SetupNavGraph.kt — ПОЛНОСТЬЮ РАБОЧАЯ ВЕРСИЯ С РЕКОМЕНДАЦИЯМИ
 package nadinee.studentmaterialssearch.navigation
 
 import AuthState
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.*
 import androidx.navigation.compose.*
-import kotlinx.coroutines.flow.collectLatest  // ← ЭТО РАБОТАЕТ ВЕЗДЕ!
-import nadinee.studentmaterialssearch.App
-
-import nadinee.studentmaterialssearch.data.SearchResult
+import kotlinx.coroutines.flow.collectLatest
 import nadinee.studentmaterialssearch.screens.*
 import java.net.URLDecoder
 import java.net.URLEncoder
 
 
+
 sealed class Screen(val route: String, val title: String, val icon: ImageVector? = null) {
     object Login : Screen("login", "Вход", Icons.Filled.Login)
     object Search : Screen("search", "Поиск", Icons.Filled.Search)
-    object Account : Screen("account", "Профиль", Icons.Filled.AccountCircle)
     object Favorites : Screen("favorites", "Избранное", Icons.Filled.Star)
+    object Recommendations : Screen("recommendations", "Рекомендации", Icons.Filled.AutoAwesome)
+    object Account : Screen("account", "Профиль", Icons.Filled.AccountCircle)
+
     object Details : Screen("details/{url}", "Результат") {
         fun createRoute(url: String) = "details/${URLEncoder.encode(url, "UTF-8")}"
     }
@@ -41,11 +41,10 @@ fun SetupNavGraph(
     var isLoggedIn by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        authState.isLoggedIn.collectLatest { value: Boolean ->
+        authState.isLoggedIn.collectLatest { value ->
             isLoggedIn = value
         }
     }
-
 
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
@@ -66,6 +65,18 @@ fun SetupNavGraph(
                 })
             }
 
+            composable(Screen.Search.route) {
+                SearchScreen(navController = navController, authState = authState)
+            }
+
+            composable(Screen.Favorites.route) {
+                FavoritesScreen(navController = navController, authState = authState)
+            }
+
+            composable(Screen.Recommendations.route) {  // ← ВОТ ТУТ ДОБАВЛЕНО!
+                RecommendationsScreen(navController = navController, authState = authState)
+            }
+
             composable(Screen.Account.route) {
                 AccountScreen(authState = authState, onLogout = {
                     authState.logout()
@@ -75,15 +86,12 @@ fun SetupNavGraph(
                 })
             }
 
-            composable(Screen.Search.route) {
-                SearchScreen(navController = navController, authState = authState)
-            }
-
-            composable(Screen.Favorites.route) {
-                FavoritesScreen(navController = navController, authState = authState)
-            }
-
-            composable(Screen.Details.route, arguments = listOf(navArgument("url") { type = NavType.StringType })) {
+            composable(
+                Screen.Details.route,
+                arguments = listOf(navArgument("url") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val encodedUrl = backStackEntry.arguments?.getString("url") ?: ""
+                val url = try { URLDecoder.decode(encodedUrl, "UTF-8") } catch (e: Exception) { encodedUrl }
                 DetailsScreen(navController = navController, authState = authState)
             }
 
@@ -105,8 +113,9 @@ fun BottomNavBar(
     isLoggedIn: Boolean,
     currentRoute: String?
 ) {
+    // ← Теперь 4 иконки: Поиск → Избранное → Рекомендации → Профиль
     val items = if (isLoggedIn) {
-        listOf(Screen.Search, Screen.Favorites, Screen.Account)
+        listOf(Screen.Search, Screen.Favorites, Screen.Recommendations, Screen.Account)
     } else {
         listOf(Screen.Search, Screen.Login)
     }
@@ -115,11 +124,16 @@ fun BottomNavBar(
         items.forEach { screen ->
             val selected = when {
                 currentRoute?.startsWith("details") == true -> screen == Screen.Search
+                currentRoute?.startsWith("webview") == true -> screen == Screen.Search
                 else -> currentRoute == screen.route
             }
 
             NavigationBarItem(
-                icon = { screen.icon?.let { Icon(it, contentDescription = screen.title) } },
+                icon = {
+                    screen.icon?.let {
+                        Icon(it, contentDescription = screen.title)
+                    }
+                },
                 label = { Text(screen.title) },
                 selected = selected,
                 onClick = {
