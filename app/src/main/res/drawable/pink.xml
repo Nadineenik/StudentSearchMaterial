@@ -1,0 +1,127 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="128dp"
+    android:height="128dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+    <!-- === ТЕЛО === -->
+    <path
+        android:fillColor="#FFD6EB"
+        android:strokeColor="#FF6FB3"
+        android:strokeWidth="28"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round"
+        android:pathData="
+            M180,260
+            C150,230 150,180 200,170
+            L260,170
+            C310,170 350,210 350,250
+            C350,300 300,330 260,330
+            C220,330 200,310 180,260Z" />
+
+    <!-- === ХВОСТ (волна) === -->
+    <path
+        android:strokeColor="#FF6FB3"
+        android:strokeWidth="22"
+        android:strokeLineCap="round"
+        android:pathData="
+            M200,380
+            C230,400 260,400 290,380
+            M200,420
+            C230,440 260,440 290,420" />
+
+    <!-- === ЛЕВАЯ РУКА === -->
+    <path
+        android:fillColor="#FFD6EB"
+        android:strokeColor="#FF6FB3"
+        android:strokeWidth="28"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round"
+        android:pathData="
+            M200,250
+            C170,270 160,310 185,330
+            C200,345 230,330 235,310" />
+
+    <!-- === ПРАВАЯ РУКА (поднята, сердечко) === -->
+    <path
+        android:fillColor="#FFD6EB"
+        android:strokeColor="#FF6FB3"
+        android:strokeWidth="28"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round"
+        android:pathData="
+            M320,230
+            C360,200 380,190 400,200
+            C420,210 420,240 400,250
+            C380,260 350,260 330,245" />
+
+    <!-- === ГРУДНАЯ КНОПКА === -->
+    <path
+        android:fillColor="#FF6FB3"
+        android:pathData="
+            M240,265
+            a25,25 0 1,1 50,0
+            a25,25 0 1,1 -50,0" />
+
+    <!-- === ГОЛОВА === -->
+    <path
+        android:fillColor="#FFD6EB"
+        android:strokeColor="#FF6FB3"
+        android:strokeWidth="28"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round"
+        android:pathData="
+            M150,90
+            h210
+            a40,40 0 0,1 40,40
+            v80
+            a40,40 0 0,1 -40,40
+            h-210
+            a40,40 0 0,1 -40,-40
+            v-80
+            a40,40 0 0,1 40,-40z" />
+
+    <!-- === ДИСПЛЕЙ === -->
+    <path
+        android:fillColor="#0D0F13"
+        android:pathData="
+            M170,115
+            h180
+            a28,28 0 0,1 28,28
+            v60
+            a28,28 0 0,1 -28,28
+            h-180
+            a28,28 0 0,1 -28,-28
+            v-60
+            a28,28 0 0,1 28,-28z" />
+
+    <!-- === ГЛАЗЫ — большие круглые, блёстки === -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M195,150 a18,18 0 1,1 36,0 a18,18 0 1,1 -36,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M275,150 a18,18 0 1,1 36,0 a18,18 0 1,1 -36,0" />
+    <!-- маленькие блёстки в глазах -->
+    <path
+        android:fillColor="#FFE9F6"
+        android:pathData="M210,140 a6,6 0 1,1 12,0 a6,6 0 1,1 -12,0" />
+    <path
+        android:fillColor="#FFE9F6"
+        android:pathData="M290,140 a6,6 0 1,1 12,0 a6,6 0 1,1 -12,0" />
+
+    <!-- === Румянец === -->
+    <path
+        android:fillColor="#FFC1DD"
+        android:pathData="M170,185 a16,10 0 1,1 32,0 a16,10 0 1,1 -32,0" />
+    <path
+        android:fillColor="#FFC1DD"
+        android:pathData="M310,185 a16,10 0 1,1 32,0 a16,10 0 1,1 -32,0" />
+
+    <!-- === УЛЫБКА (милый), маленький ротик === -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="12"
+        android:strokeLineCap="round"
+        android:pathData="M245,205 C255,215 275,215 285,205" />
+</vector>
