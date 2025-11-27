@@ -1,29 +1,29 @@
-// AccountScreen.kt — ФИНАЛЬНАЯ, РАБОЧАЯ, НЕ ЛОМАЕТ ИНТЕРЕСЫ
+// AccountScreen.kt — ФИНАЛЬНАЯ ВЕРСИЯ (без ошибок!)
 package nadinee.studentmaterialssearch.screens
 
 import AuthState
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import nadinee.studentmaterialssearch.App
 import nadinee.studentmaterialssearch.R
+import nadinee.studentmaterialssearch.data.ThemePreferences
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,17 +33,20 @@ fun AccountScreen(
 ) {
     val scope = rememberCoroutineScope()
     val currentUser by authState.currentUser.collectAsState()
+    val context = LocalContext.current
 
     var isEditing by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var interestsInput by remember { mutableStateOf("") }
-
-    // ← КЛЮЧЕВОЙ МОМЕНТ: состояние интересов НЕ привязано к currentUser!
     var selectedInterests by remember { mutableStateOf<Set<String>>(emptySet()) }
 
-    // Загружаем данные при появлении пользователя
+    // Тёмная тема
+    val systemIsDark = isSystemInDarkTheme()
+    val userChoice: Boolean? = ThemePreferences.getTheme(context)
+    val isDark = userChoice ?: systemIsDark
+
     LaunchedEffect(currentUser) {
         currentUser?.let { user ->
             name = user.name
@@ -61,6 +64,28 @@ fun AccountScreen(
             CenterAlignedTopAppBar(
                 title = { Text("Мой профиль") },
                 actions = {
+                    // РЫЧАЖОК ТЕМЫ В ЗАГОЛОВКЕ
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isDark) Icons.Default.DarkMode else Icons.Default.LightMode,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Switch(
+                            checked = isDark,
+                            onCheckedChange = { enabled ->
+                                ThemePreferences.setDarkTheme(context, enabled)
+                                (context as? android.app.Activity)?.recreate()
+                            }
+                        )
+                    }
+
+                    // Кнопка редактирования
                     IconButton(onClick = {
                         if (isEditing) {
                             scope.launch {
@@ -75,7 +100,6 @@ fun AccountScreen(
                                     interests = selectedInterests.joinToString(",")
                                 )
 
-                                // Обновляем AuthState
                                 currentUser?.let {
                                     authState.login(it.copy(
                                         name = name,
@@ -106,23 +130,24 @@ fun AccountScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(24.dp),
+                .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // АВАТАР
             Image(
                 painter = painterResource(R.drawable.avatar),
                 contentDescription = "Аватар",
+                contentScale = ContentScale.Crop,  // ← Исправлено!
                 modifier = Modifier.size(120.dp)
             )
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(32.dp))
 
             if (isEditing) {
-                // === РЕДАКТИРОВАНИЕ ===
+                // РЕДАКТИРОВАНИЕ
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Имя") }, modifier = Modifier.fillMaxWidth())
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(12.dp))
                 OutlinedTextField(value = email, onValueChange = {}, label = { Text("Email") }, enabled = false, modifier = Modifier.fillMaxWidth())
-                Spacer(Modifier.height(10.dp))
-
+                Spacer(Modifier.height(12.dp))
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
@@ -130,91 +155,62 @@ fun AccountScreen(
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(20.dp))
 
                 OutlinedTextField(
                     value = interestsInput,
                     onValueChange = { interestsInput = it },
-                    label = { Text("Интересы (через запятую)") },
+                    label = { Text("Интересы через запятую") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(Modifier.height(5.dp))
+                Spacer(Modifier.height(12.dp))
 
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(selectedInterests.toList()) { interest ->
-                        AssistChip(
-                            onClick = { },
-                            label = {
-                                Text(
-                                    text = interest,
-                                    fontSize = 10.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            },
-                            trailingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Удалить",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier
-                                        .size(14.dp)
-                                        .clickable {
-                                            selectedInterests = selectedInterests - interest
-                                        }
-                                )
-                            },
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                trailingIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            ),
-                            border = null, // ← просто null, если не поддерживается
-                            shape = MaterialTheme.shapes.small
+                        InputChip(
+                            selected = true,
+                            onClick = { selectedInterests = selectedInterests - interest },
+                            label = { Text(interest) },
+                            trailingIcon = { Icon(Icons.Default.Close, "Удалить", modifier = Modifier.size(18.dp)) }
                         )
                     }
                 }
 
-                Spacer(Modifier.height(5.dp))
-
-                Button(
-                    onClick = {
-                        val newOnes = interestsInput.split(",")
-                            .map { it.trim() }
-                            .filter { it.isNotBlank() }
-                        if (newOnes.isNotEmpty()) {
-                            selectedInterests = selectedInterests + newOnes
-                            interestsInput = ""
-                        }
-                    },
-                    modifier = Modifier.align(Alignment.End)
-                ) {
+                Spacer(Modifier.height(12.dp))
+                Button(onClick = {
+                    val newOnes = interestsInput.split(",").map { it.trim() }.filter { it.isNotBlank() }
+                    if (newOnes.isNotEmpty()) {
+                        selectedInterests = selectedInterests + newOnes
+                        interestsInput = ""
+                    }
+                }, modifier = Modifier.align(Alignment.End)) {
                     Text("Добавить")
                 }
 
             } else {
-                // === ПРОСМОТР ===
-                Text("Привет, $name!", style = MaterialTheme.typography.titleLarge, fontSize = 24.sp)
+                // ПРОСМОТР
+                Text("Привет, $name!", style = MaterialTheme.typography.titleLarge, fontSize = 28.sp)
                 Spacer(Modifier.height(8.dp))
-                Text(email, style = MaterialTheme.typography.bodyLarge)
-                Spacer(Modifier.height(24.dp))
+                Text(email, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(32.dp))
 
                 if (selectedInterests.isNotEmpty()) {
-                    Text("Интересы:", style = MaterialTheme.typography.labelLarge)
-                    Spacer(Modifier.height(8.dp))
+                    Text("Интересы", style = MaterialTheme.typography.labelLarge)
+                    Spacer(Modifier.height(12.dp))
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(selectedInterests.toList()) { interest ->
                             FilledTonalButton(onClick = {}) { Text(interest) }
                         }
                     }
-                    Spacer(Modifier.height(24.dp))
+                    Spacer(Modifier.height(32.dp))
                 }
 
-                Button(onClick = onLogout, modifier = Modifier.fillMaxWidth()) {
-                    Text("Выйти из аккаунта")
+                Button(
+                    onClick = onLogout,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                ) {
+                    Text("Выйти из аккаунта", color = MaterialTheme.colorScheme.onErrorContainer)
                 }
             }
         }

@@ -51,33 +51,30 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
 
-    // Navigation
+    // ← ВСЁ, ЧТО ВЫШЕ — ОСТАЁТСЯ КАК БЫЛО
+
+    // ← ВАЖНО: ЭТА СТРОКА ДОЛЖНА БЫТЬ ИМЕННО ЗДЕСЬ (после BOM)!
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // ← Всё остальное — как у тебя было
     implementation("androidx.navigation:navigation-compose:2.9.5")
 
-    // Room
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
+    implementation(libs.androidx.compose.foundation)
     kapt("androidx.room:room-compiler:2.6.1")
 
-    // ViewModel + Coroutines
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
-    // Retrofit + Gson + OkHttp
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
-    // Icons
     implementation("androidx.compose.material:material-icons-extended:1.7.4")
-
-    // УДАЛЕНО: Firebase (ты его не используешь)
-    // implementation(libs.firebase.firestore.ktx)
-
-    // Остальное
     implementation(libs.play.services.appsearch)
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
 
-    // Тесты
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
