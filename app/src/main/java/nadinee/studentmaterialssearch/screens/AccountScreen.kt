@@ -1,10 +1,9 @@
-// AccountScreen.kt — ФИНАЛЬНАЯ ВЕРСИЯ (без ошибок!)
+// AccountScreen.kt — ФИНАЛЬНАЯ ЧИСТАЯ ВЕРСИЯ (ПЛАВНАЯ ТЕМА РАБОТАЕТ!)
 package nadinee.studentmaterialssearch.screens
 
 import AuthState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -23,7 +22,8 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import nadinee.studentmaterialssearch.App
 import nadinee.studentmaterialssearch.R
-import nadinee.studentmaterialssearch.data.ThemePreferences
+import nadinee.studentmaterialssearch.ui.theme.isAppInDarkTheme
+import nadinee.studentmaterialssearch.ui.theme.LocalThemeUpdater
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,10 +42,9 @@ fun AccountScreen(
     var interestsInput by remember { mutableStateOf("") }
     var selectedInterests by remember { mutableStateOf<Set<String>>(emptySet()) }
 
-    // Тёмная тема
-    val systemIsDark = isSystemInDarkTheme()
-    val userChoice: Boolean? = ThemePreferences.getTheme(context)
-    val isDark = userChoice ?: systemIsDark
+    // ГЛОБАЛЬНАЯ ТЕМА — ЧИТАЕМ ИЗ CompositionLocal
+    val isDark = isAppInDarkTheme()
+    val updateTheme = LocalThemeUpdater.current
 
     LaunchedEffect(currentUser) {
         currentUser?.let { user ->
@@ -64,7 +63,6 @@ fun AccountScreen(
             CenterAlignedTopAppBar(
                 title = { Text("Мой профиль") },
                 actions = {
-                    // РЫЧАЖОК ТЕМЫ В ЗАГОЛОВКЕ
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(end = 8.dp)
@@ -79,32 +77,25 @@ fun AccountScreen(
                         Switch(
                             checked = isDark,
                             onCheckedChange = { enabled ->
-                                ThemePreferences.setDarkTheme(context, enabled)
-                                (context as? android.app.Activity)?.recreate()
+                                updateTheme(enabled)  // Плавно меняет тему по всему приложению!
                             }
                         )
                     }
 
-                    // Кнопка редактирования
                     IconButton(onClick = {
                         if (isEditing) {
                             scope.launch {
-                                val finalPassword = if (password.isBlank()) {
-                                    currentUser?.password ?: return@launch
-                                } else password
-
-                                App.database.userDao().updateProfile(
-                                    email = email,
-                                    name = name,
-                                    password = finalPassword,
-                                    interests = selectedInterests.joinToString(",")
-                                )
-
-                                currentUser?.let {
-                                    authState.login(it.copy(
+                                val finalPassword = if (password.isBlank()) currentUser?.password else password
+                                finalPassword?.let {
+                                    App.database.userDao().updateProfile(
+                                        email = email,
                                         name = name,
+                                        password = it,
                                         interests = selectedInterests.joinToString(",")
-                                    ))
+                                    )
+                                    currentUser?.let { u ->
+                                        authState.login(u.copy(name = name, interests = selectedInterests.joinToString(",")))
+                                    }
                                 }
                             }
                         }
@@ -112,7 +103,7 @@ fun AccountScreen(
                     }) {
                         Icon(
                             imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
-                            contentDescription = if (isEditing) "Сохранить" else "Редактировать"
+                            contentDescription = null
                         )
                     }
                 }
@@ -133,17 +124,15 @@ fun AccountScreen(
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // АВАТАР
             Image(
                 painter = painterResource(R.drawable.avatar),
                 contentDescription = "Аватар",
-                contentScale = ContentScale.Crop,  // ← Исправлено!
+                contentScale = ContentScale.Crop,
                 modifier = Modifier.size(120.dp)
             )
             Spacer(Modifier.height(32.dp))
 
             if (isEditing) {
-                // РЕДАКТИРОВАНИЕ
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Имя") }, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(12.dp))
                 OutlinedTextField(value = email, onValueChange = {}, label = { Text("Email") }, enabled = false, modifier = Modifier.fillMaxWidth())
@@ -177,18 +166,18 @@ fun AccountScreen(
                 }
 
                 Spacer(Modifier.height(12.dp))
-                Button(onClick = {
-                    val newOnes = interestsInput.split(",").map { it.trim() }.filter { it.isNotBlank() }
-                    if (newOnes.isNotEmpty()) {
-                        selectedInterests = selectedInterests + newOnes
-                        interestsInput = ""
-                    }
-                }, modifier = Modifier.align(Alignment.End)) {
-                    Text("Добавить")
-                }
+                Button(
+                    onClick = {
+                        val newOnes = interestsInput.split(",").map { it.trim() }.filter { it.isNotBlank() }
+                        if (newOnes.isNotEmpty()) {
+                            selectedInterests += newOnes
+                            interestsInput = ""
+                        }
+                    },
+                    modifier = Modifier.align(Alignment.End)
+                ) { Text("Добавить") }
 
             } else {
-                // ПРОСМОТР
                 Text("Привет, $name!", style = MaterialTheme.typography.titleLarge, fontSize = 28.sp)
                 Spacer(Modifier.height(8.dp))
                 Text(email, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -207,10 +196,10 @@ fun AccountScreen(
 
                 Button(
                     onClick = onLogout,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                    modifier = Modifier.fillMaxWidth()
+                   // colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer)
                 ) {
-                    Text("Выйти из аккаунта", color = MaterialTheme.colorScheme.onErrorContainer)
+                    Text("Выйти из аккаунта")//, color = MaterialTheme.colorScheme.onErrorContainer)
                 }
             }
         }

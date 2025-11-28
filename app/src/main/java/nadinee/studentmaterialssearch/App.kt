@@ -10,6 +10,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import nadinee.studentmaterialssearch.data.AppDatabase
 
+
 class App : Application() {
     companion object {
         val database: AppDatabase by lazy {
