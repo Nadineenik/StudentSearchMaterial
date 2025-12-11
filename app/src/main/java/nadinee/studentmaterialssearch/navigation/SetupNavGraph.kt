@@ -3,12 +3,16 @@ package nadinee.studentmaterialssearch.navigation
 
 import AuthState
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.*
 import androidx.navigation.compose.*
 import kotlinx.coroutines.flow.collectLatest
@@ -120,7 +124,6 @@ fun BottomNavBar(
     isLoggedIn: Boolean,
     currentRoute: String?
 ) {
-    // ← Теперь 4 иконки: Поиск → Избранное → Рекомендации → Профиль
     val items = if (isLoggedIn) {
         listOf(Screen.Search, Screen.History, Screen.Favorites, Screen.Recommendations, Screen.Account)
     } else {
@@ -138,10 +141,21 @@ fun BottomNavBar(
             NavigationBarItem(
                 icon = {
                     screen.icon?.let {
-                        Icon(it, contentDescription = screen.title)
+                        Icon(
+                            imageVector = it,
+                            contentDescription = screen.title,
+                            modifier = Modifier.size(20.dp) // чуть меньше иконки
+                        )
                     }
                 },
-                label = { Text(screen.title) },
+                label = {
+                    Text(
+                        text = screen.title,
+                        fontSize = 10.sp,           // ← УМЕНЬШЕННЫЙ ШРИФТ!
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
                 selected = selected,
                 onClick = {
                     navController.navigate(screen.route) {
@@ -149,7 +163,9 @@ fun BottomNavBar(
                         launchSingleTop = true
                         restoreState = true
                     }
-                }
+                },
+                // Делаем чуть компактнее
+                alwaysShowLabel = true
             )
         }
     }
