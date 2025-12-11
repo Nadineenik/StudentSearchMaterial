@@ -130,13 +130,13 @@ fun AccountScreen(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.size(120.dp)
             )
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(22.dp))
 
             if (isEditing) {
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Имя") }, modifier = Modifier.fillMaxWidth())
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(10.dp))
                 OutlinedTextField(value = email, onValueChange = {}, label = { Text("Email") }, enabled = false, modifier = Modifier.fillMaxWidth())
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(10.dp))
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
@@ -144,7 +144,7 @@ fun AccountScreen(
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(10.dp))
 
                 OutlinedTextField(
                     value = interestsInput,
@@ -152,7 +152,7 @@ fun AccountScreen(
                     label = { Text("Интересы через запятую") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(10.dp))
 
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(selectedInterests.toList()) { interest ->
@@ -165,7 +165,7 @@ fun AccountScreen(
                     }
                 }
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(10.dp))
                 Button(
                     onClick = {
                         val newOnes = interestsInput.split(",").map { it.trim() }.filter { it.isNotBlank() }
