@@ -29,8 +29,16 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     object Recommendations : Screen("recommendations", "Рекомендации", Icons.Filled.AutoAwesome)
     object Account : Screen("account", "Профиль", Icons.Filled.AccountCircle)
 
-    object Details : Screen("details/{url}", "Результат") {
-        fun createRoute(url: String) = "details/${URLEncoder.encode(url, "UTF-8")}"
+    object Details : Screen(
+        route = "details/{url}/{title}/{content}",
+        title = "Результат"
+    ) {
+        fun createRoute(url: String, title: String, content: String): String {
+            return "details/" +
+                    "${URLEncoder.encode(url, "UTF-8")}/" +
+                    "${URLEncoder.encode(title, "UTF-8")}/" +
+                    "${URLEncoder.encode(content, "UTF-8")}"
+        }
     }
     object WebView : Screen("webview/{url}", "Браузер") {
         fun createRoute(url: String) = "webview/${URLEncoder.encode(url, "UTF-8")}"

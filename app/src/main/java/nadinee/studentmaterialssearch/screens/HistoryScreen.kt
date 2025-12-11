@@ -51,7 +51,7 @@ fun HistoryScreen(
                     ) {
                         items(history, key = { it.id }) { item ->
                             Card(
-                                onClick = { navController.navigate(Screen.Details.createRoute(item.url)) },
+                                onClick = { navController.navigate(Screen.Details.createRoute(item.url, item.title, item.content)) },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {

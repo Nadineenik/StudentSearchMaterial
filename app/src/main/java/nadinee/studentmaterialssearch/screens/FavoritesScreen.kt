@@ -46,7 +46,7 @@ fun FavoritesScreen(
                 else -> {
                     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(favorites, key = { it.url }) { fav ->
-                            Card(onClick = { navController.navigate(Screen.Details.createRoute(fav.url)) }, modifier = Modifier.fillMaxWidth()) {
+                            Card(onClick = { navController.navigate(Screen.Details.createRoute(fav.url, fav.title, fav.content)) }, modifier = Modifier.fillMaxWidth()) {
                                 Column(Modifier.padding(16.dp)) {
                                     Text(fav.title, style = MaterialTheme.typography.titleMedium)
                                     Spacer(Modifier.height(4.dp))

@@ -22,11 +22,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import nadinee.studentmaterialssearch.App
-import nadinee.studentmaterialssearch.data.Favorite
 import nadinee.studentmaterialssearch.data.History
 import nadinee.studentmaterialssearch.navigation.Screen
-
-import nadinee.studentmaterialssearch.screens.SearchQueryEvent  // ← важен импорт!
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,7 +113,13 @@ fun SearchScreen(
                                     )
                                 }
                             }
-                            navController.navigate(Screen.Details.createRoute(item.url))
+                            navController.navigate(
+                                Screen.Details.createRoute(
+                                    url = item.url,
+                                    title = item.title,
+                                    content = item.content // или полный текст
+                                )
+                            )
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {

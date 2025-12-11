@@ -38,27 +38,35 @@ fun DetailsScreen(navController: NavController, authState: AuthState) {
     val urlArg = navController.currentBackStackEntry?.arguments?.getString("url") ?: ""
     val url = try { URLDecoder.decode(urlArg, "UTF-8") } catch (e: Exception) { urlArg }
 
-    LaunchedEffect(url, currentEmail) {
+    LaunchedEffect(url) {
         scope.launch {
+            // 1. Сначала пытаемся взять данные из аргументов (это то, что ты передал при навигации)
+            val titleArg = navController.currentBackStackEntry?.arguments?.getString("title") ?: "Статья"
+            val contentArg = navController.currentBackStackEntry?.arguments?.getString("content") ?: "Содержание недоступно"
+
+            var decodedTitle = titleArg
+            var decodedContent = contentArg
+            try {
+                decodedTitle = URLDecoder.decode(titleArg, "UTF-8")
+                decodedContent = URLDecoder.decode(contentArg, "UTF-8")
+            } catch (e: Exception) { }
+
+            result = SearchResult(decodedTitle, url, decodedContent)
+
+            // 2. Только если пользователь авторизован — проверяем избранное и перезаписываем title/content из БД (если они там лучше/актуальнее)
             currentEmail?.let { email ->
                 val favorite = App.database.favoriteDao().getByUrl(url, email)
-                result = favorite?.let { SearchResult(it.title, it.url, it.content) }
-                isFavorite = favorite != null
-            }
-
-            if (result == null) {
-                currentEmail?.let { email ->
-                    val history = App.database.historyDao().getAllForUser(email).find { it.url == url }
-                    result = history?.let { SearchResult(it.title, it.url, it.content) }
+                if (favorite != null) {
+                    result = SearchResult(favorite.title, favorite.url, favorite.content)
+                    isFavorite = true
+                } else {
+                    val historyItem = App.database.historyDao().getAllForUser(email).find { it.url == url }
+                    if (historyItem != null) {
+                        result = SearchResult(historyItem.title, historyItem.url, historyItem.content)
+                    }
                 }
-            }
 
-            if (result == null) {
-                result = SearchResult("Статья", url, "Содержание недоступно")
-            }
-
-            // Добавляем в историю
-            currentEmail?.let { email ->
+                // Добавляем/обновляем историю
                 App.database.historyDao().add(
                     History(
                         userEmail = email,
