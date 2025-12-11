@@ -19,7 +19,7 @@ class App : Application() {
                 AppDatabase::class.java,
                 "student_app.db"
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .fallbackToDestructiveMigration() // ← ОСТАВЬ НА ВРЕМЯ РАЗРАБОТКИ!
                 .allowMainThreadQueries() // ← временно, чтобы не падало
                 .build()
@@ -47,7 +47,7 @@ class App : Application() {
         }
 
         // САМАЯ ВАЖНАЯ МИГРАЦИЯ — ДЕЛАЕТ ВСЁ БЕЗОПАСНО
-        val MIGRATION_3_4 = object : Migration(3, 4) {
+        val MIGRATION_3_4 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // Создаём новую таблицу
                 db.execSQL("""
@@ -78,6 +78,23 @@ class App : Application() {
                 db.execSQL("DROP TABLE IF EXISTS favorites")
                 db.execSQL("ALTER TABLE favorites_new RENAME TO favorites")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_favorites_userEmail ON favorites(userEmail)")
+            }
+        }
+
+        // Добавляем миграцию 4 в App.kt
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+            CREATE TABLE history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                userEmail TEXT,
+                url TEXT NOT NULL,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                viewedAt INTEGER NOT NULL
+            )
+        """.trimIndent())
+                db.execSQL("CREATE INDEX index_history_userEmail ON history(userEmail)")
             }
         }
 

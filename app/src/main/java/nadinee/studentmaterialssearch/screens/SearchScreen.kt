@@ -23,6 +23,7 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import nadinee.studentmaterialssearch.App
 import nadinee.studentmaterialssearch.data.Favorite
+import nadinee.studentmaterialssearch.data.History
 import nadinee.studentmaterialssearch.navigation.Screen
 
 import nadinee.studentmaterialssearch.screens.SearchQueryEvent  // ← важен импорт!
@@ -100,13 +101,15 @@ fun SearchScreen(
             LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(viewModel.results, key = { it.url }) { item ->
                     Card(
+                        // Обновляем SearchScreen.kt — теперь добавляем в историю, а не в избранное
+// В SearchScreen.kt, внутри Card onClick:
                         onClick = {
-                            currentEmail?.let { email ->
-                                scope.launch {
-                                    App.database.favoriteDao().add(
-                                        Favorite(
-                                            url = item.url,
+                            scope.launch {
+                                currentEmail?.let { email ->
+                                    App.database.historyDao().add(
+                                        History(
                                             userEmail = email,
+                                            url = item.url,
                                             title = item.title,
                                             content = item.content
                                         )

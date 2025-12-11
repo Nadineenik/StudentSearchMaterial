@@ -31,6 +31,9 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     object WebView : Screen("webview/{url}", "Браузер") {
         fun createRoute(url: String) = "webview/${URLEncoder.encode(url, "UTF-8")}"
     }
+    object History : Screen("history", "История", Icons.Filled.History)
+
+
 }
 
 @Composable
@@ -103,6 +106,10 @@ fun SetupNavGraph(
                 val url = try { URLDecoder.decode(encodedUrl, "UTF-8") } catch (e: Exception) { encodedUrl }
                 WebViewScreen(url = url, navController = navController)
             }
+
+            composable(Screen.History.route) {
+                HistoryScreen(navController = navController, authState = authState)
+            }
         }
     }
 }
@@ -115,7 +122,7 @@ fun BottomNavBar(
 ) {
     // ← Теперь 4 иконки: Поиск → Избранное → Рекомендации → Профиль
     val items = if (isLoggedIn) {
-        listOf(Screen.Search, Screen.Favorites, Screen.Recommendations, Screen.Account)
+        listOf(Screen.Search, Screen.History, Screen.Favorites, Screen.Recommendations, Screen.Account)
     } else {
         listOf(Screen.Search, Screen.Login)
     }
