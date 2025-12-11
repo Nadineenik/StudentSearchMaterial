@@ -1,16 +1,20 @@
-// DetailsScreen.kt — ФИНАЛЬНАЯ ВЕРСИЯ: история + избранное вручную
+// DetailsScreen.kt — ФИНАЛЬНАЯ ВЕРСИЯ: история + избранное + 2 кнопки открытия
 package nadinee.studentmaterialssearch.screens
 
 import AuthState
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
@@ -25,7 +29,9 @@ import java.net.URLDecoder
 @Composable
 fun DetailsScreen(navController: NavController, authState: AuthState) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val currentEmail = authState.currentUser.collectAsState().value?.email
+
     var isFavorite by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<SearchResult?>(null) }
 
@@ -34,14 +40,12 @@ fun DetailsScreen(navController: NavController, authState: AuthState) {
 
     LaunchedEffect(url, currentEmail) {
         scope.launch {
-            // 1. Загружаем данные из избранного (если есть)
             currentEmail?.let { email ->
                 val favorite = App.database.favoriteDao().getByUrl(url, email)
                 result = favorite?.let { SearchResult(it.title, it.url, it.content) }
                 isFavorite = favorite != null
             }
 
-            // 2. ЕСЛИ НЕ НАШЛИ В ИЗБРАННОМ — загружаем из истории (или создаём новый)
             if (result == null) {
                 currentEmail?.let { email ->
                     val history = App.database.historyDao().getAllForUser(email).find { it.url == url }
@@ -49,13 +53,11 @@ fun DetailsScreen(navController: NavController, authState: AuthState) {
                 }
             }
 
-            // 3. ЕСЛИ И В ИСТОРИИ НЕТ — создаём временный объект (например, из аргументов)
             if (result == null) {
-                // Это может быть переход из поиска — создаём заглушку
                 result = SearchResult("Статья", url, "Содержание недоступно")
             }
 
-            // 4. ВСЕГДА ДОБАВЛЯЕМ В ИСТОРИЮ (если залогинен)
+            // Добавляем в историю
             currentEmail?.let { email ->
                 App.database.historyDao().add(
                     History(
@@ -127,14 +129,30 @@ fun DetailsScreen(navController: NavController, authState: AuthState) {
                     Spacer(Modifier.width(8.dp))
                     Text(if (isFavorite) "Удалить из избранного" else "Добавить в избранное")
                 }
+                Spacer(Modifier.height(16.dp))
             }
 
-            Spacer(Modifier.height(16.dp))
+            // КНОПКА ОТКРЫТЬ В ПРИЛОЖЕНИИ
             Button(
                 onClick = { navController.navigate(Screen.WebView.createRoute(url)) },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Открыть в приложении")
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // КНОПКА ОТКРЫТЬ В БРАУЗЕРЕ — НОВАЯ!
+            OutlinedButton(
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    context.startActivity(intent)
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.OpenInBrowser, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Открыть в браузере")
             }
         }
     }
