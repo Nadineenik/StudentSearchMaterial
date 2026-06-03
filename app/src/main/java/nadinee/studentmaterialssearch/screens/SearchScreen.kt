@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import nadinee.studentmaterialssearch.App
 import nadinee.studentmaterialssearch.data.History
 import nadinee.studentmaterialssearch.navigation.Screen
+import androidx.compose.ui.platform.testTag
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,25 +65,57 @@ fun SearchScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
+//            OutlinedTextField(
+//                value = query,
+//                onValueChange = { query = it },
+//                label = { Text("Введите запрос") },
+//                modifier = Modifier.fillMaxWidth(),
+//                singleLine = true,
+//                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+//                keyboardActions = KeyboardActions(onSearch = { if (query.isNotBlank()) viewModel.search(query) })
+//            )
+//
+//            Spacer(Modifier.height(12.dp))
+//
+//            Button(
+//                onClick = { if (query.isNotBlank()) viewModel.search(query) },
+//                enabled = !viewModel.isLoading,
+//                modifier = Modifier.align(Alignment.End)
+//            ) {
+//                if (viewModel.isLoading) {
+//                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+//                } else {
+//                    Text("Искать")
+//                }
+//            }
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
                 label = { Text("Введите запрос") },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("searchInput"),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { if (query.isNotBlank()) viewModel.search(query) })
+                keyboardActions = KeyboardActions(onSearch = {
+                    if (query.isNotBlank()) viewModel.search(query)
+                })
             )
 
             Spacer(Modifier.height(12.dp))
 
             Button(
-                onClick = { if (query.isNotBlank()) viewModel.search(query) },
-                enabled = !viewModel.isLoading,
-                modifier = Modifier.align(Alignment.End)
+                onClick = { viewModel.search(query) },
+                enabled = query.isNotBlank() && !viewModel.isLoading,
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .testTag("searchButton")
             ) {
                 if (viewModel.isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp
+                    )
                 } else {
                     Text("Искать")
                 }

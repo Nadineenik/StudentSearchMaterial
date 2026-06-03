@@ -1,3 +1,5 @@
+import java.util.Properties  // <-- ДОБАВЛЕНО
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -18,6 +20,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Читаем токен из local.properties
+        val properties = Properties()
+        properties.load(project.rootProject.file("local.properties").inputStream())
+        val serpApiKey = properties.getProperty("SERPSTACK_API_KEY") ?: ""
+
+        buildConfigField("String", "SERPSTACK_API_KEY", "\"$serpApiKey\"")
     }
 
     buildTypes {
@@ -38,6 +47,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true  // <-- ДОБАВЛЕНО
     }
 }
 
@@ -62,6 +72,7 @@ dependencies {
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.ui)
     kapt("androidx.room:room-compiler:2.6.1")
 
     implementation(libs.androidx.lifecycle.viewmodel.ktx)

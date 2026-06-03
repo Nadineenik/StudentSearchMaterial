@@ -5,9 +5,10 @@ import retrofit2.converter.gson.GsonConverterFactory
 import nadinee.studentmaterialssearch.data.OrganicResult
 import nadinee.studentmaterialssearch.data.SerpStackResponse
 import nadinee.studentmaterialssearch.data.SearchResult
+import nadinee.studentmaterialssearch.BuildConfig
 
 object SerpStackClient {
-    private const val API_KEY = "8f01dfa59291f7df5626368121a0f8c3"
+    private val API_KEY = BuildConfig.SERPSTACK_API_KEY
     private const val BASE_URL = "https://api.serpstack.com/"
 
     private val retrofit = Retrofit.Builder()
@@ -34,7 +35,7 @@ object SerpStackClient {
         return results.map { result ->
             SearchResult(
                 title = result.title ?: "Без заголовка",
-                url = result.url ?: "",  // ← ИЗМЕНИЛ: было result.link
+                url = result.url ?: "",
                 content = result.snippet ?: "Без описания"
             )
         }

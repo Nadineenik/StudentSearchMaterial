@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.collectLatest
 import nadinee.studentmaterialssearch.screens.*
 import java.net.URLDecoder
 import java.net.URLEncoder
-
+import androidx.compose.ui.platform.testTag
 
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector? = null) {
@@ -147,12 +147,13 @@ fun BottomNavBar(
             }
 
             NavigationBarItem(
+                modifier = Modifier.testTag("bottom_${screen.route}"),
                 icon = {
                     screen.icon?.let {
                         Icon(
                             imageVector = it,
                             contentDescription = screen.title,
-                            modifier = Modifier.size(20.dp) // чуть меньше иконки
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 },
